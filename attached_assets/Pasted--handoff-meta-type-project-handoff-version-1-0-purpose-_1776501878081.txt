@@ -1,0 +1,456 @@
+{
+  "handoff_meta": {
+    "type": "project_handoff",
+    "version": "1.0",
+    "purpose": "Open a new LLM chat with full context for designing a lightweight web platform for self-assessment and external assessment (360-style) at the University of Basel.",
+    "instruction_to_llm": "Use this as the authoritative starting context. The goal is not a big enterprise product, but a manageable, light architecture that a non-professional developer can realistically shape with AI support."
+  },
+  "project": {
+    "name": "Leadership Assessment Platform",
+    "working_title": "Selbst- und Fremdeinschätzung Plattform",
+    "organization_context": "University of Basel",
+    "deployment_context": "Potentially hosted on university vHosting, assuming the use case is allowed and data classification is acceptable for that environment.",
+    "current_status": "Existing HTML questionnaire/report prototype exists for self-assessment. Platform concept is now expanding toward managed multi-user workflows with login, case management, external respondent links, and report generation."
+  },
+  "strategic_goal": {
+    "summary": "Build a lightweight, manageable web platform for self-assessment and external assessment that supports structured feedback collection, managed case workflows, and report generation.",
+    "key_principle": "Keep it light, understandable, and realistically maintainable by a non-pro developer using AI-assisted development.",
+    "non_goal": "Do not design a heavyweight enterprise HR suite or a complex multi-service architecture."
+  },
+  "core_use_cases": [
+    {
+      "id": "UC1",
+      "name": "Selbstbefähigung / Self-assessment",
+      "summary": "A person logs in with university account, completes the questionnaire online, and receives or later accesses their report.",
+      "target_user": "Internal university employee",
+      "desired_outcome": "Low-friction self-assessment flow with immediate or controlled report access."
+    },
+    {
+      "id": "UC2",
+      "name": "Fremdeinschätzung / External assessment",
+      "summary": "A coordinator or manager creates a case for one target person, optionally links the self-assessment, invites respondents via unique links, collects feedback, and generates an aggregated report.",
+      "target_user": "Case manager / HR / facilitator",
+      "desired_outcome": "Managed, structured, anonymized assessment workflow with final report handover to the target person."
+    }
+  ],
+  "workflow_models": {
+    "self_assessment": {
+      "steps": [
+        "User logs in with Entra ID / university account.",
+        "User sees assigned or available self-assessment.",
+        "User completes questionnaire.",
+        "System stores responses.",
+        "System generates report or marks report as available.",
+        "User views or downloads report."
+      ]
+    },
+    "external_assessment": {
+      "steps": [
+        "Manager creates a case for a target person.",
+        "Manager optionally links or enables self-assessment within the same case.",
+        "Manager adds external respondents.",
+        "System generates unique invitation links or tokens for respondents.",
+        "Respondents complete the external assessment.",
+        "System tracks response status.",
+        "System aggregates and anonymizes responses.",
+        "System generates report.",
+        "Manager reviews and releases report.",
+        "Target person receives report."
+      ]
+    }
+  },
+  "roles": [
+    {
+      "id": "role_target_person",
+      "name": "Target Person / Participant",
+      "capabilities": [
+        "Login with Entra ID",
+        "Complete self-assessment",
+        "View own released reports"
+      ]
+    },
+    {
+      "id": "role_external_respondent",
+      "name": "External Respondent",
+      "capabilities": [
+        "Access questionnaire through unique tokenized link",
+        "Complete only assigned external assessment",
+        "No access to broader platform data"
+      ]
+    },
+    {
+      "id": "role_manager",
+      "name": "Case Manager / Coordinator",
+      "capabilities": [
+        "Create and manage cases",
+        "Assign target persons",
+        "Add and manage respondents",
+        "Track completion state",
+        "Trigger report generation",
+        "Review and release reports"
+      ]
+    },
+    {
+      "id": "role_admin",
+      "name": "Admin",
+      "capabilities": [
+        "Manage questionnaires",
+        "Manage templates",
+        "Manage roles and permissions",
+        "Maintain platform configuration"
+      ]
+    }
+  ],
+  "authentication_and_access": {
+    "primary_auth": {
+      "type": "SSO",
+      "provider": "Microsoft Entra ID",
+      "notes": [
+        "Internal users should authenticate with university Entra ID accounts.",
+        "This is especially relevant for self-assessment and manager/admin functions."
+      ]
+    },
+    "external_access": {
+      "type": "Tokenized links",
+      "notes": [
+        "External respondents should ideally not need full platform login.",
+        "Each respondent should receive a unique, case-bound assessment link."
+      ]
+    },
+    "access_model": {
+      "principle": "Same platform, different access modes.",
+      "details": [
+        "Internal staff: Entra login",
+        "External respondents: unique invitation/token link"
+      ]
+    }
+  },
+  "platform_concept": {
+    "core_model": "Case-based assessment platform",
+    "description": "The central object is a case. A case belongs to one target person and can contain a self-assessment, multiple external assessments, report states, and management metadata.",
+    "why_case_based": [
+      "Keeps self- and external assessment in one coherent workflow",
+      "Supports managed facilitation process",
+      "Matches real-world coordination needs better than isolated questionnaires"
+    ]
+  },
+  "case_lifecycle": [
+    "draft",
+    "self_assessment_open",
+    "external_assessment_open",
+    "collecting_responses",
+    "ready_for_report",
+    "report_generated",
+    "reviewed",
+    "released",
+    "closed"
+  ],
+  "recommended_core_screens": [
+    {
+      "id": "screen_login",
+      "name": "Login / Landing",
+      "purpose": "Authentication entry and role-aware landing page."
+    },
+    {
+      "id": "screen_self",
+      "name": "My Self-Assessment",
+      "purpose": "Internal user completes self-assessment and later accesses report."
+    },
+    {
+      "id": "screen_external",
+      "name": "External Response Page",
+      "purpose": "Respondent opens tokenized link and submits external assessment."
+    },
+    {
+      "id": "screen_manager",
+      "name": "Case Manager Dashboard",
+      "purpose": "Create cases, assign people, invite respondents, track status, generate/release reports."
+    },
+    {
+      "id": "screen_report",
+      "name": "Report View",
+      "purpose": "View self-report, external aggregated report, and comparison output."
+    }
+  ],
+  "functional_requirements": {
+    "must_have": [
+      "Entra ID login for internal users",
+      "Case creation and case management",
+      "Self-assessment flow",
+      "External respondent invitation flow with unique links",
+      "Response tracking",
+      "Report generation",
+      "Report release workflow",
+      "Role separation"
+    ],
+    "should_have": [
+      "Link self-assessment and external assessment inside one case",
+      "Status indicators for completion progress",
+      "Human-readable case overview",
+      "Simple report export (HTML and/or PDF)",
+      "Basic admin configuration"
+    ],
+    "nice_to_have_later": [
+      "Reminder sending",
+      "Questionnaire versioning UI",
+      "Multi-language support",
+      "Subgroup analysis if methodologically desired",
+      "Audit log",
+      "Advanced dashboard analytics"
+    ]
+  },
+  "reporting_requirements": {
+    "self_report": {
+      "description": "Report for the individual self-assessment.",
+      "notes": [
+        "Can potentially be made available directly after completion or through manager release, depending on process."
+      ]
+    },
+    "external_report": {
+      "description": "Aggregated report from external respondents.",
+      "notes": [
+        "Should be generated per case / per target person.",
+        "Should support anonymized aggregation.",
+        "Should be reviewable by manager before release."
+      ]
+    },
+    "comparison_report": {
+      "description": "Optional contrast layer between self-assessment and external assessment.",
+      "notes": [
+        "Should show differences neutrally, not moralistically.",
+        "Should be modular: can be included or omitted."
+      ]
+    },
+    "rendering_preference": {
+      "format": "HTML-first",
+      "secondary_output": "PDF export via browser or server-side render if needed later",
+      "notes": [
+        "Existing report design language from the questionnaire HTML should be reused."
+      ]
+    }
+  },
+  "questionnaire_engine": {
+    "principle": "One questionnaire engine, two modes",
+    "modes": [
+      "self",
+      "external"
+    ],
+    "notes": [
+      "Same structural question model, different framing and permissions.",
+      "Potentially slightly different wording or intro copy depending on mode."
+    ]
+  },
+  "data_model_concept": {
+    "core_entities": [
+      {
+        "name": "User",
+        "fields": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "entra_id_reference"
+        ]
+      },
+      {
+        "name": "Case",
+        "fields": [
+          "id",
+          "target_person_id",
+          "status",
+          "created_by",
+          "created_at",
+          "questionnaire_version"
+        ]
+      },
+      {
+        "name": "AssessmentInstance",
+        "fields": [
+          "id",
+          "case_id",
+          "type",
+          "respondent_user_id_or_token",
+          "status",
+          "submitted_at"
+        ]
+      },
+      {
+        "name": "ResponseSet",
+        "fields": [
+          "assessment_instance_id",
+          "answers",
+          "comments",
+          "submitted_at"
+        ]
+      },
+      {
+        "name": "Report",
+        "fields": [
+          "id",
+          "case_id",
+          "type",
+          "generated_at",
+          "release_state",
+          "rendered_output_reference"
+        ]
+      }
+    ]
+  },
+  "architecture_direction": {
+    "style": "Lightweight web app, not a heavyweight enterprise system",
+    "preferred_shape": {
+      "frontend": [
+        "Self-assessment UI",
+        "External respondent UI",
+        "Manager dashboard",
+        "Report viewer"
+      ],
+      "backend": [
+        "Authentication",
+        "Case management",
+        "Respondent link/token handling",
+        "Response storage",
+        "Report generation"
+      ],
+      "storage": [
+        "Simple, structured persistence for users, cases, responses, reports"
+      ]
+    },
+    "principles": [
+      "Keep architecture understandable by inspection",
+      "Avoid unnecessary microservices",
+      "Avoid overengineering",
+      "Favor a coherent monolithic or semi-monolithic app over distributed complexity",
+      "Reuse HTML-first report strength"
+    ]
+  },
+  "design_and_ux_notes": {
+    "existing_strengths": [
+      "There is already an existing HTML questionnaire/report design language.",
+      "The reporting style should remain institutional, editorial, and calm rather than dashboard-like."
+    ],
+    "known_improvements_for_self_assessment_html": [
+      "Add progress/status bar",
+      "Show clearly which sections are fully answered",
+      "Explain why evaluation/report is not yet available if required answers are missing",
+      "Improve overall leseführung / UX guidance",
+      "Reconsider decorative connector lines in the report visuals if they add no meaning"
+    ],
+    "platform_ux_direction": [
+      "Simple and calm, not app-noisy",
+      "Clear role-based journeys",
+      "Low-friction respondent experience",
+      "Manager clarity over cleverness"
+    ]
+  },
+  "inspiration_sources": {
+    "repositories_reviewed": [
+      {
+        "name": "Open360",
+        "takeaway": "Useful as inspiration for a real managed 360 workflow with admin flow and user flow. Good architectural inspiration, but too heavy to adopt directly."
+      },
+      {
+        "name": "Paneon/three-sixty",
+        "takeaway": "Useful reminder that lightweight orchestration is possible, but Google Forms/Sheets architecture is not the desired destination here."
+      },
+      {
+        "name": "thermondo/threesixty",
+        "takeaway": "Useful for reflection-first and more human UX ideas, but too opinionated as a full model."
+      },
+      {
+        "name": "nashjain/feedback360",
+        "takeaway": "Useful for understanding the minimal business objects and review flow; better as conceptual inspiration than direct base code."
+      }
+    ],
+    "architectural_conclusion": "Do not fork one of these directly. Borrow workflow ideas from Open360 and feedback360, and possibly UX/reporting ideas from thermondo/threesixty, but design a much smaller custom platform."
+  },
+  "recommended_strategy": {
+    "summary": "Build a smaller custom platform inspired by existing products rather than adopting a full existing codebase.",
+    "why": [
+      "Existing solutions are either too heavy, too outdated, too opinionated, or tied to the wrong ecosystem.",
+      "A smaller custom app better fits the user's skill level and desired maintainability."
+    ]
+  },
+  "constraints": {
+    "team_context": [
+      "Main driver is not a professional developer.",
+      "Development will likely be AI-assisted / vibe-coded."
+    ],
+    "technical_constraints": [
+      "Architecture must stay manageable.",
+      "Should be realistic to evolve incrementally."
+    ],
+    "organizational_constraints": [
+      "University environment",
+      "Potential hosting on vHosting",
+      "Entra ID login desired",
+      "Need for clear ownership / management process"
+    ]
+  },
+  "phase_plan": {
+    "phase_1": {
+      "name": "Conceptual platform definition",
+      "deliverables": [
+        "Roles",
+        "Screens",
+        "Case lifecycle",
+        "Entity model",
+        "Flow diagrams"
+      ]
+    },
+    "phase_2": {
+      "name": "Minimal platform MVP",
+      "deliverables": [
+        "Entra login for internal users",
+        "Case manager dashboard",
+        "Self-assessment page",
+        "External respondent token page",
+        "Response storage",
+        "Simple report generation"
+      ]
+    },
+    "phase_3": {
+      "name": "Report refinement and managed release flow",
+      "deliverables": [
+        "Improved report design",
+        "Manager review/release control",
+        "Comparison layer",
+        "Better exports"
+      ]
+    },
+    "phase_4": {
+      "name": "Platform polish and scale-up",
+      "deliverables": [
+        "Admin settings",
+        "Reminder flows",
+        "Questionnaire versioning",
+        "More robust operational tooling"
+      ]
+    }
+  },
+  "open_questions": [
+    "Should self-assessment reports be immediately visible to users, or only after some release step?",
+    "What exact anonymity rules should apply to external assessments?",
+    "What is the minimum number of respondents required for external report generation?",
+    "Should external respondents always remain token-based, or should some flows require login?",
+    "Should managers see raw responses, aggregated responses only, or curated reports only?",
+    "What exact report modules are mandatory in version 1?",
+    "Is the platform for one specific assessment instrument only, or should it be questionnaire-extensible from the start?"
+  ],
+  "build_philosophy_for_llm": {
+    "tone": "Architecturally thoughtful but pragmatic.",
+    "priority": [
+      "clarity",
+      "lightness",
+      "maintainability",
+      "fit to real workflow"
+    ],
+    "avoid": [
+      "big enterprise patterns for their own sake",
+      "unnecessary infra complexity",
+      "premature abstraction",
+      "trying to clone full commercial HR systems"
+    ],
+    "target": "A small, coherent, case-based assessment platform that can realistically be built iteratively with AI support."
+  }
+}

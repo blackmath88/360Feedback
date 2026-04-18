@@ -3,13 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Leadership Assessment Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: cases
+    description: Assessment case management
+  - name: assessments
+    description: Assessment instances
+  - name: questionnaire
+    description: Questionnaire and answers
+  - name: reports
+    description: Report generation and access
+  - name: dashboard
+    description: Dashboard summaries
+
 paths:
   /healthz:
     get:
@@ -24,6 +39,404 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login (demo mode - select user)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List cases (filtered by role)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseBody"
+      responses:
+        "201":
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}:
+    get:
+      operationId: getCase
+      tags: [cases]
+      summary: Get case by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update case status or metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseBody"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}/respondents:
+    post:
+      operationId: addRespondent
+      tags: [cases]
+      summary: Add an external respondent to a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRespondentBody"
+      responses:
+        "201":
+          description: Respondent added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentInstance"
+
+  /cases/{id}/generate-report:
+    post:
+      operationId: generateReport
+      tags: [cases]
+      summary: Trigger report generation for a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /cases/{id}/release-report:
+    post:
+      operationId: releaseReport
+      tags: [cases]
+      summary: Release report to the target person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /assessments/self/{caseId}:
+    get:
+      operationId: getSelfAssessment
+      tags: [assessments]
+      summary: Get self-assessment instance for a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Self-assessment instance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentInstance"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assessments/token/{token}:
+    get:
+      operationId: getAssessmentByToken
+      tags: [assessments]
+      summary: Get assessment by respondent token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Assessment instance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentInstance"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /assessments/{id}/answers:
+    get:
+      operationId: getAnswers
+      tags: [questionnaire]
+      summary: Get saved answers for an assessment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Answers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseSet"
+    post:
+      operationId: saveAnswers
+      tags: [questionnaire]
+      summary: Save answers for an assessment (partial save)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveAnswersBody"
+      responses:
+        "200":
+          description: Answers saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseSet"
+
+  /assessments/{id}/submit:
+    post:
+      operationId: submitAssessment
+      tags: [questionnaire]
+      summary: Submit a completed assessment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveAnswersBody"
+      responses:
+        "200":
+          description: Assessment submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentInstance"
+
+  /questionnaire/structure:
+    get:
+      operationId: getQuestionnaireStructure
+      tags: [questionnaire]
+      summary: Get the questionnaire structure (sections and questions)
+      parameters:
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [self, external]
+      responses:
+        "200":
+          description: Questionnaire structure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionnaireStructure"
+
+  /reports/case/{caseId}:
+    get:
+      operationId: getReportForCase
+      tags: [reports]
+      summary: Get report(s) for a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/my-cases:
+    get:
+      operationId: getMyCases
+      tags: [dashboard]
+      summary: Get cases assigned to the current user (as target person)
+      responses:
+        "200":
+          description: My cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseWithProgress"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +447,368 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, participant]
+      required:
+        - id
+        - name
+        - email
+        - role
+
+    LoginBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+      required:
+        - userId
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        targetPersonId:
+          type: integer
+        targetPersonName:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - self_assessment_open
+            - external_assessment_open
+            - collecting_responses
+            - ready_for_report
+            - report_generated
+            - reviewed
+            - released
+            - closed
+        createdById:
+          type: integer
+        createdByName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        respondentCount:
+          type: integer
+        completedRespondentCount:
+          type: integer
+        selfAssessmentStatus:
+          type: ["string", "null"]
+      required:
+        - id
+        - title
+        - targetPersonId
+        - targetPersonName
+        - status
+        - createdById
+        - createdByName
+        - createdAt
+        - updatedAt
+        - respondentCount
+        - completedRespondentCount
+        - selfAssessmentStatus
+
+    CaseDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        targetPersonId:
+          type: integer
+        targetPersonName:
+          type: string
+        status:
+          type: string
+        createdById:
+          type: integer
+        createdByName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentInstance"
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+      required:
+        - id
+        - title
+        - targetPersonId
+        - targetPersonName
+        - status
+        - createdById
+        - createdByName
+        - createdAt
+        - updatedAt
+        - assessments
+        - reports
+
+    CreateCaseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        targetPersonId:
+          type: integer
+        includeSelfAssessment:
+          type: boolean
+      required:
+        - title
+        - targetPersonId
+
+    UpdateCaseBody:
+      type: object
+      properties:
+        status:
+          type: string
+        title:
+          type: string
+
+    AddRespondentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - name
+        - email
+
+    AssessmentInstance:
+      type: object
+      properties:
+        id:
+          type: integer
+        caseId:
+          type: integer
+        type:
+          type: string
+          enum: [self, external]
+        status:
+          type: string
+          enum: [pending, in_progress, submitted]
+        respondentName:
+          type: ["string", "null"]
+        respondentEmail:
+          type: ["string", "null"]
+        token:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - caseId
+        - type
+        - status
+        - respondentName
+        - respondentEmail
+        - token
+        - submittedAt
+        - createdAt
+
+    ResponseSet:
+      type: object
+      properties:
+        assessmentInstanceId:
+          type: integer
+        answers:
+          type: object
+          additionalProperties:
+            type: ["number", "null"]
+        comments:
+          type: object
+          additionalProperties:
+            type: string
+        savedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - assessmentInstanceId
+        - answers
+        - comments
+        - savedAt
+
+    SaveAnswersBody:
+      type: object
+      properties:
+        answers:
+          type: object
+          additionalProperties:
+            type: ["number", "null"]
+        comments:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - answers
+        - comments
+
+    QuestionnaireStructure:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionSection"
+      required:
+        - sections
+
+    QuestionSection:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+      required:
+        - id
+        - title
+        - description
+        - questions
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        scaleMin:
+          type: integer
+        scaleMax:
+          type: integer
+        scaleLabels:
+          type: object
+          additionalProperties:
+            type: string
+        allowComment:
+          type: boolean
+      required:
+        - id
+        - text
+        - scaleMin
+        - scaleMax
+        - scaleLabels
+        - allowComment
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        caseId:
+          type: integer
+        type:
+          type: string
+          enum: [self, external, comparison]
+        generatedAt:
+          type: string
+          format: date-time
+        releaseState:
+          type: string
+          enum: [draft, reviewed, released]
+        data:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - caseId
+        - type
+        - generatedAt
+        - releaseState
+        - data
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalCases:
+          type: integer
+        activeCases:
+          type: integer
+        completedCases:
+          type: integer
+        pendingReports:
+          type: integer
+        totalRespondents:
+          type: integer
+        completedAssessments:
+          type: integer
+      required:
+        - totalCases
+        - activeCases
+        - completedCases
+        - pendingReports
+        - totalRespondents
+        - completedAssessments
+
+    CaseWithProgress:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        status:
+          type: string
+        selfAssessmentStatus:
+          type: ["string", "null"]
+        selfAssessmentId:
+          type: ["integer", "null"]
+        reportReleased:
+          type: boolean
+        reportId:
+          type: ["integer", "null"]
+      required:
+        - id
+        - title
+        - status
+        - selfAssessmentStatus
+        - selfAssessmentId
+        - reportReleased
+        - reportId
