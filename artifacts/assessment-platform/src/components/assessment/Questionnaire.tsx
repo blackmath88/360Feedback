@@ -120,7 +120,7 @@ export function Questionnaire({
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       {/* Sidebar Navigation */}
-      <div className="w-full md:w-64 shrink-0 space-y-6 sticky top-24">
+      <div className="w-full md:w-64 md:shrink-0 space-y-6 sticky top-24">
         <div className="bg-card border border-border p-4 rounded-lg">
           <h3 className="font-serif font-semibold text-lg mb-4">Progress</h3>
           <Progress value={progress} className="h-2 mb-2" />
